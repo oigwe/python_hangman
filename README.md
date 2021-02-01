@@ -7,7 +7,7 @@ ignore case and words that do not contain all alphabets, count the frequencies, 
 **Language**
 Python
 
-### Below is an example of the word cloud generated from the selected text
+### Below is a demonstration of the hangman script
 ![Hangman](./hangman.gif)
 ---
 ---
