@@ -11,98 +11,95 @@ Python
 ![Hangman](./hangman.gif)
 ---
 ---
-## Below are the installs and imports needed for the hangman script
+### Below are the installs and imports needed for the hangman script
 
 ```
-!pip install wordcloud
-!pip install fileupload
-!pip install ipywidgets
-!jupyter nbextension install --py --user fileupload
-!jupyter nbextension enable --py fileupload
+import random
+import string
 
-import wordcloud
-import numpy as np
-from matplotlib import pyplot as plt
-from IPython.display import display
-import fileupload
-import io
-import sys
+from word_list import words # dictionary of English words
 ```
 
-## Below is code for the the uploader widget
-
+### Code which allows the computer to select a **random** word from the imported word list (word_list)
 ```
-def _upload():
-
-    _upload_widget = fileupload.FileUploadWidget()
-
-    def _cb(change):
-        global file_contents
-        decoded = io.StringIO(change['owner'].data.decode('utf-8'))
-        filename = change['owner'].filename
-        print('Uploaded `{}` ({:.2f} kB)'.format(
-            filename, len(decoded.read()) / 2 **10))
-        file_contents = decoded.getvalue()
-
-    _upload_widget.observe(_cb, names='data')
-    display(_upload_widget)
-
-_upload()
-```
-The text used for the word cloud displayed below is the **Vassals of the Lode-Star by Gardner F. Fox**
-The text was found through **The Project Gutenberg**
-
-## Below is a function that iterates through the uploaded file, removes punctuation, and counts the frequency of each word. The function will ignore any word that does not contain only letters, as well as overly utilized words like "and" or "the"
-
-```
-def calculate_frequencies(file_contents):
+def get_valid_word(word_list):
+    # The code will randomly select a word from the imported word list
+    word = random.choice(words) 
     
-    # Here is a list of punctuations and over-utilized words that will be filtered from the text
-
-    punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
-
-    uninteresting_words = ["the", "a", "to", "if", "is", "it", "of", "and", "or", "an", "as", "i", "me", "my", \
-    "we", "our", "ours", "you", "your", "yours", "he", "she", "him", "his", "her", "hers", "its", "they", "them", \
-    "their", "what", "which", "who", "whom", "this", "that", "am", "are", "was", "were", "be", "been", "being", \
-    "have", "has", "had", "do", "does", "did", "but", "at", "by", "with", "from", "here", "when", "where", "how", \
-    "all", "any", "both", "each", "few", "more", "some", "such", "no", "nor", "too", "very", "can", "will", "just"]
+    # Dashes and spaces are unintuitive guesses, so the function will 
+    # use a conditional to filter out any randomly selected words that
+    # contain dashes or spaces
     
-    # List Comprehension will be used to filter out punctuation and over-utilized words found in the above lists
+    if '-' in word or ' ' in word:
+        word = random.choice(words)
+   
 
-    ```
-    word_list = file_contents.split(' ')
-
-    words = [word for word in word_list if uninteresting_words.count(word.lower()) == 0]
-
-    words_no_punct = [word for word in words if word.isalpha()]
-    ```
-
-    ## A dictionary will be used as a frequency table to catalog word repetition
-
-    ```
-    word_freq = {}
-    
-    for word in words_no_punct:
-        if word.lower() in word_freq:
-            word_freq[word.lower()] += 1
-        else: 
-            word_freq[word.lower()] = 1
-    ```
-    ## Below are the methods used by wordcloud
-    
-    ```
-    cloud = wordcloud.WordCloud()
-    cloud.generate_from_frequencies(word_freq)
-    return cloud.to_array()
-    ```
-    
-# Used to display the wordcloud image
-
-myimage = calculate_frequencies(file_contents)
-plt.imshow(myimage, interpolation = 'nearest')
-plt.axis('off')
-plt.show()
+    return word.upper()
 ```
----
----
+
+### Code for the hangman game
+```
+def hangman_game():
+    # Invoking function to select the game word
+    word = get_valid_word(words)
+
+    # Creating a set of letters are valid guesses
+    alphabet = set(string.ascii_uppercase) 
+    
+    # Creating a letter bank of guessed letters
+    used_letters = set()
+
+    # Creating a set in order to track correctly guessed letters
+    letters_in_word = set(word)
+    
+    # -----------------------------------
+
+
+    # Introduction Prompt
+    user_input = input('Welcome to Python Hangman. Type "Start" \n').upper()
+    if user_input == "START":
+        print("YEAH! Let's get started \n ----------------------\n")
+    
+    # ---------------------------------------------------------------
+
+    # Defining A Penalty
+    lives = 5
+
+    # Code that allows the user to repeatedly make a guess
+    while len(letters_in_word) > 0 and lives > 0:
+
+        # Display of the status of the game
+        word_list = [letter if letter in used_letters else '_' for letter in word]
+        print('Your Lives: {}'.format(lives))
+        print('The word: ' + ' '.join(word_list))
+
+        # User Input: The user is prompted to guess a letter
+        user_guess = input('\nGuess A Letter: ').upper()
+
+        # Logic to determine if guess is correct or not
+        if user_guess in alphabet - used_letters:
+            used_letters.add(user_guess)
+            if user_guess in letters_in_word:
+                letters_in_word.remove(user_guess)
+                print('')
+            else: 
+                lives -= 1
+                if lives == 0:
+                    print("You lost. The word was {}".format(word))
+                    return
+                else:
+                    print("\n-----------------------\nWRONG! You lost a life")
+        elif user_guess in used_letters:
+            print("\nYou've guessed that letter already")
+        else:
+            print('\nError: Invalid Character! Guess again')
+        
+        print("Letters guessed: " + ' '.join(used_letters))
+
+    if lives > 0 and len(letters_in_word) == 0:
+        print("Yeah You Won. You guessed {}".format(word))
+
+hangman_game()
+    ```
+   
 
